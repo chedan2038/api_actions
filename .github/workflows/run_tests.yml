@@ -39,7 +39,7 @@ jobs:
         if: "github.event.inputs.deployment_target == 'second_test'"
         run: pytest tests/test_all.py::test_get_by_id --alluredir = allure-results
       - name: Store allure results
-      - uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
         with:
           name: allure-results
           path: allure-results
