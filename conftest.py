@@ -13,7 +13,6 @@ def obj_id():
     :return: str
     """
 
-
     obj = CreateObject()
     del_obj = DeleteObject()
 

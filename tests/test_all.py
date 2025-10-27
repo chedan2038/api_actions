@@ -1,7 +1,6 @@
 import allure
 import pytest
 
-
 from endpoints.create_object import CreateObject
 from endpoints.delete_object import DeleteObject
 from endpoints.get_object_by_Id import GetObjectById
@@ -12,6 +11,7 @@ from schemes.get_obj_by_id import GetObjModel
 from schemes.obj_list_model import ItemsObjectsListModel
 from schemes.update_obj_model import UpdateObjectModel
 from test_data.payloads import *
+
 
 @allure.feature('Objects')
 @allure.story('Get objects')
@@ -26,6 +26,7 @@ def test_get_all_objects():
     g.check_status_code(200)
     g.validate(ItemsObjectsListModel)
 
+
 @allure.feature('Objects')
 @allure.story('Get objects')
 def test_get_by_id():
@@ -38,6 +39,7 @@ def test_get_by_id():
     g.get_by_id('4')
     g.check_status_code(200)
     g.validate(GetObjModel)
+
 
 @allure.feature('Objects')
 @allure.story('Create objects')
@@ -58,6 +60,7 @@ def test_create():
     g.get_by_id(c.response_json['id'])
     g.response_is_as_expected(create_object_payload, ['id'])
 
+
 @allure.feature('Objects')
 @allure.story('Update objects')
 def test_update(obj_id):
@@ -77,6 +80,7 @@ def test_update(obj_id):
     g.check_field('data.CPU model', 'Intel Core i27')
     g.check_field('data.Hard disk size', '100 TB')
 
+
 @allure.feature('Objects')
 @allure.story('Delete objects')
 def test_delete(obj_id):
@@ -91,6 +95,7 @@ def test_delete(obj_id):
     d.check_status_code(200)
     g.get_by_id(obj_id)
     g.check_status_code(404)
+
 
 @allure.feature('Objects')
 @allure.story('Create objects')
