@@ -23,6 +23,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Chrome
+        run: sudo apt-get install google-chrome-stable
+      - name: install dependencies
+        run: pip install -r requirements.txt
+
       - name: Download History
 
         run: >
@@ -39,17 +50,6 @@ jobs:
           https://api.github.com/repos/chedan2038/api_actions/actions/artifacts/$ARTIFACT_ID/zip 
           -o artifacts.zip
       - run: mkdir allure-results && unzip artifacts.zip -d allure-results
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install Chrome
-        run: sudo apt-get install google-chrome-stable
-      - name: install dependencies
-        run: pip install -r requirements.txt
 
 
       - name: first_test
