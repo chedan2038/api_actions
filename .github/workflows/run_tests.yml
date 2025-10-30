@@ -6,7 +6,7 @@ on:
       deployment_target:
         description: Choose target
         required: true
-        default:
+        default: second_test
         type: choice
         options:
           - first_test
@@ -25,30 +25,32 @@ jobs:
       - name: setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12.3"
+          python-version: "3.10"
       - run: >
-          ARTIFACT_ID=$(curl -L   
+          ARTIFACT_ID=$(curl -L 
           -H "Accept: application/vnd.github+json" 
           -H "X-GitHub-Api-Version: 2022-11-28" 
-          "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts?name=allure-results" 
-          | python3 -c "import sys, json; print(json.load(sys.stdin)['artifacts'][0]['id']);") &&
-          curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/chedan2038/api_actions/actions/artifacts/$ARTIFACT_ID/zip -o artifacts.zip
-
+          "https://api.github.com/repos/senior-tester/run-tests-demo/actions/artifacts?name=allure-results" 
+          | python -c "import sys, json; print(json.load(sys.stdin)['artifacts'][0]['id']);") 
+          &&
+          curl -L 
+          -H "Accept: application/vnd.github+json" 
+          -H "Authorization: Bearer ${{ secrets.TOKEN }}" 
+          -H "X-GitHub-Api-Version: 2022-11-28" 
+          https://api.github.com/repos/senior-tester/run-tests-demo/actions/artifacts/$ARTIFACT_ID/zip 
+          -o artifacts.zip
       - run: mkdir allure-results && unzip artifacts.zip -d allure-results
       - name: Store allure history
         uses: actions/upload-artifact@v4
         with:
-          name: allure-history
-          path: allure-results
+          name: allure-results
+          path:
+            allure-results
           retention-days: 1
-      
 
   test:
     runs-on: ubuntu-latest
+    needs: download-history
 
     steps:
       - name: Checkout repository
@@ -56,28 +58,25 @@ jobs:
       - name: setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12.3"
+          python-version: "3.10"
       - name: Install Chrome
         run: sudo apt-get install google-chrome-stable
-      - name: Install dependencies
-        run: pip install -r "requirements.txt"
-
-      - name: Download all workflow artifacts
+      - name: install dependencies
+        run: pip install -r requirements.txt
+      - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
-
       - name: first_test
         if: "github.event.inputs.deployment_target == 'first_test'"
-        run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
-#        continue-on-error: true
+        run: pytest tests/test_button.py::test_button_exist --alluredir=allure-results
       - name: second_test
         if: "github.event.inputs.deployment_target == 'second_test'"
-        run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
-#        continue-on-error: true
+        run: pytest tests/test_button.py::test_button_exist_2 --alluredir=allure-results
       - name: Store allure results
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
-          path: allure-results
+          path:
+            allure-results
           retention-days: 1
 
   generate-report:
@@ -87,17 +86,18 @@ jobs:
     steps:
       - uses: actions/setup-java@v4
         with:
-          distribution: microsoft
+          distribution: 'microsoft' # See 'Supported distributions' for available options
           java-version: '17'
       - run: sudo wget https://github.com/allure-framework/allure2/releases/download/2.23.1/allure-2.23.1.tgz && sudo tar -zxvf allure-2.23.1.tgz -C /opt/ && sudo ln -s /opt/allure-2.23.1/bin/allure /usr/bin/allure
-      - name: Download all workflow artifacts
+      - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
       - run: allure generate -c allure-results -o _site
       - name: Store generated report
         uses: actions/upload-artifact@v4
         with:
           name: _site
-          path: _site
+          path:
+            _site
           retention-days: 1
 
   publish-report:
@@ -105,9 +105,9 @@ jobs:
     needs: generate-report
     name: Report publication
     steps:
-      - name: Download all workflow artifacts
+      - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
-      - name: Upload static files as artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
       - name: Deploy to GitHub Pages
         id: deployment
