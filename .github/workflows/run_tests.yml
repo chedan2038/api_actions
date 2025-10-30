@@ -11,6 +11,7 @@ on:
         options:
           - first_test
           - second_test
+          - all
 
 permissions:
   contents: read
@@ -18,7 +19,6 @@ permissions:
   id-token: write
 
 jobs:
-
   download-history:
     runs-on: ubuntu-latest
     name: Download history
@@ -33,7 +33,6 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts?name=allure-results" \
             | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('artifacts',[{}])[0].get('id',''))")
-          
           if [ -n "$ARTIFACT_ID" ]; then
             curl -sL \
               -H "Accept: application/vnd.github+json" \
@@ -41,16 +40,31 @@ jobs:
               -H "X-GitHub-Api-Version: 2022-11-28" \
               "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts/$ARTIFACT_ID/zip" \
               -o artifacts.zip
-            mkdir -p allure-results && unzip -q artifacts.zip -d allure-results
-          else
-            mkdir -p allure-results
           fi
+
+          REPORT_ID=$(curl -sL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts?name=github-pages" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('artifacts',[{}])[0].get('id',''))")
+          if [ -n "$REPORT_ID" ]; then
+            curl -sL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.TOKEN }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts/$REPORT_ID/zip" \
+              -o pages.zip
+          fi
+
+          mkdir -p allure-results old_pages pages_history
+          [ -f artifacts.zip ] && unzip -q artifacts.zip -d allure-results
+          [ -f pages.zip ] && unzip -q pages.zip -d old_pages && tar -xf old_pages/artifact.tar -C pages_history && cp -r pages_history/history allure-results || true
+
       - name: Store allure history
         uses: actions/upload-artifact@v4
         with:
           name: allure-history
-          path:
-            allure-results
+          path: allure-results
           retention-days: 1
 
   test:
@@ -70,20 +84,20 @@ jobs:
         run: pip install -r requirements.txt
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
-
-      - name: first_test
-        if: "github.event.inputs.deployment_target == 'first_test'"
-        run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
-      - name: second_test
-        if: "github.event.inputs.deployment_target == 'second_test'"
-        run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
-
+      - name: Run tests
+        run: |
+          if [ "${{ github.event.inputs.deployment_target }}" = "first_test" ]; then
+            pytest tests/test_all.py::test_get_by_id --alluredir=allure-results
+          elif [ "${{ github.event.inputs.deployment_target }}" = "second_test" ]; then
+            pytest tests/test_all.py::test_get_all_objects --alluredir=allure-results
+          else
+            pytest --alluredir=allure-results
+          fi
       - name: Store allure results
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
-          path:
-            allure-results
+          path: allure-results
           retention-days: 1
 
   generate-report:
@@ -103,8 +117,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: _site
-          path:
-            _site
+          path: _site
           retention-days: 1
 
   publish-report:
