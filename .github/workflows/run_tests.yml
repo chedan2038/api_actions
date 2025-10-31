@@ -60,20 +60,22 @@ jobs:
         run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
         continue-on-error: true
 
-      # 6️⃣ Собираем Allure отчёт с учётом истории
-      - name: Build Allure report
-        uses: simple-elf/allure-report-action@v1.7
-        if: always()
-        with:
-          gh_pages: gh_pages          # где история
-          allure_results: allure-results
-          allure_history: allure-history
+      # 6️⃣ Подготовка истории для агрегированного отчёта
+      - name: Merge current results into history
+        run: |
+          mkdir -p gh_pages/allure-history/history
+          cp -r allure-results/* gh_pages/allure-history/history/ || echo "No new results"
 
-      # 7️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
+      # 7️⃣ Собираем единый Allure отчёт с учётом всей истории
+      - name: Build aggregated Allure report
+        run: |
+          allure generate gh_pages/allure-history/history -o gh_pages/allure-history/report --clean
+
+      # 8️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
       - name: Publish Allure report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: always()
         with:
           github_token: ${{ secrets.TOKEN }}
           publish_branch: gh_pages
-          publish_dir: allure-history
+          publish_dir: gh_pages/allure-history/report
