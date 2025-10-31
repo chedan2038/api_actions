@@ -1,0 +1,28 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Fri Oct 31 16:26:07 GMT 2025","Fri Oct 31 16:26:07 GMT 2025","756","tests","test_all","","","","test_create_params[payload2]","
+    Параметризируй создание разных «товаров» (телефон/ноутбук/наушники) с разными наборами data и проверь корректность чтения.
+    "
+"passed","Fri Oct 31 16:26:01 GMT 2025","Fri Oct 31 16:26:01 GMT 2025","364","tests","test_all","","","","test_get_by_id","
+    б) Получить конкретный зарезервированный объект /objects/4 и проверить ожидаемые поля.
+    "
+"passed","Fri Oct 31 16:26:01 GMT 2025","Fri Oct 31 16:26:02 GMT 2025","765","tests","test_all","","","","test_create","
+    Создай объект с name и вложенным data (несколько типов: число, строка, bool). Проверь:
+    - 200/201 (см. фактический код)
+    - В ответе есть id и createdAt
+    - GET по id возвращает тот же name/data.
+    "
+"passed","Fri Oct 31 16:26:00 GMT 2025","Fri Oct 31 16:26:01 GMT 2025","457","tests","test_all","","","","test_get_all_objects","
+    а) Получить список объектов /objects и убедиться, что статус 200 и это JSON-массив с элементами, у которых есть id и name.
+    "
+"passed","Fri Oct 31 16:26:06 GMT 2025","Fri Oct 31 16:26:07 GMT 2025","779","tests","test_all","","","","test_create_params[payload1]","
+    Параметризируй создание разных «товаров» (телефон/ноутбук/наушники) с разными наборами data и проверь корректность чтения.
+    "
+"passed","Fri Oct 31 16:26:04 GMT 2025","Fri Oct 31 16:26:05 GMT 2025","787","tests","test_all","","","","test_delete","
+    Удали созданный объект и подтвердить, что повторный GET даёт 404/соответствующую ошибку (проверяйте фактическое поведение API).
+    "
+"passed","Fri Oct 31 16:26:05 GMT 2025","Fri Oct 31 16:26:06 GMT 2025","730","tests","test_all","","","","test_create_params[payload0]","
+    Параметризируй создание разных «товаров» (телефон/ноутбук/наушники) с разными наборами data и проверь корректность чтения.
+    "
+"passed","Fri Oct 31 16:26:02 GMT 2025","Fri Oct 31 16:26:03 GMT 2025","764","tests","test_all","","","","test_update","
+    Сделай PUT /objects/{id} с полной заменой name и data, проверь updatedAt и соответствие полей после GET.
+    "
