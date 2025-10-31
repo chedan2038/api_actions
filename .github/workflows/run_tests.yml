@@ -3,10 +3,10 @@ name: Automated Allure Tests with History
 on:
   workflow_dispatch:
     inputs:
-      target:
-        description: Choose which tests to run
+      deployment_target:
+        description: Choose target
         required: true
-        default: second_test
+        default:
         type: choice
         options:
           - first_test
@@ -54,11 +54,11 @@ jobs:
       - name: first_test
         if: "github.event.inputs.deployment_target == 'first_test'"
         run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
-        #     continue-on-error: true
+        continue-on-error: true
       - name: second_test
         if: "github.event.inputs.deployment_target == 'second_test'"
         run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
-        #        continue-on-error: true
+        continue-on-error: true
 
       # 6️⃣ Собираем Allure отчёт с учётом истории
       - name: Build Allure report
