@@ -1,0 +1,4 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Fri Oct 31 13:03:53 GMT 2025","Fri Oct 31 13:03:54 GMT 2025","391","tests","test_all","","","","test_get_all_objects","
+    а) Получить список объектов /objects и убедиться, что статус 200 и это JSON-массив с элементами, у которых есть id и name.
+    "
