@@ -77,7 +77,7 @@ jobs:
       - name: Copy history for next runs
         run: |
           mkdir -p allure-report/history
-          if [ -d "allure-results/history" ]; then
+          if [ -d "allure-results/history" ] && [ "$(ls -A allure-results/history)" ]; then
             cp -r allure-results/history/* allure-report/history/
           fi
 
