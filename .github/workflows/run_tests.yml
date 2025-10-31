@@ -63,19 +63,4 @@ jobs:
       # 6️⃣ Подготовка истории для агрегированного отчёта
       - name: Merge current results into history
         run: |
-          mkdir -p gh_pages/allure-history/history
-          cp -r allure-results/* gh_pages/allure-history/history/ || echo "No new results"
-
-      # 7️⃣ Собираем единый Allure отчёт с учётом всей истории
-      - name: Build aggregated Allure report
-        run: |
-          allure generate gh_pages/allure-history/history -o gh_pages/allure-history/report --clean
-
-      # 8️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
-      - name: Publish Allure report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        if: always()
-        with:
-          github_token: ${{ secrets.TOKEN }}
-          publish_branch: gh_pages
-          publish_dir: gh_pages/allure-history/report
+          mkdir -p gh_pages/allure-history/hi_
