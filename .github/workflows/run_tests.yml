@@ -1,11 +1,12 @@
-name: Allure Tests with Full History
+name: Automated Allure Tests with History
 
 on:
   workflow_dispatch:
     inputs:
       deployment_target:
-        description: Choose target test
+        description: Choose target
         required: true
+        default:
         type: choice
         options:
           - first_test
@@ -21,15 +22,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Клонируем репозиторий
+      # 1️⃣ Проверяем код
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Устанавливаем Python и зависимости
-      - name: Setup Python
+      # 2️⃣ Устанавливаем Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # 3️⃣ Устанавливаем зависимости
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -38,53 +41,39 @@ jobs:
           pip install -r requirements.txt
           pip install allure-pytest
 
-      # 3️⃣ Подгружаем историю Allure из ветки gh_pages
+      # 4️⃣ Загружаем историю предыдущих отчётов (ветка gh-pages)
       - name: Load previous Allure history
         uses: actions/checkout@v4
+        if: always()
         continue-on-error: true
         with:
           ref: gh_pages
-          path: gh-pages
+          path: gh_pages
 
-      # Создаем папку истории для текущих результатов
-      - name: Prepare Allure history
-        run: |
-          mkdir -p allure-results/history
-          if [ -d "gh-pages/history" ]; then
-            cp -r gh-pages/history/* allure-results/history/
-          fi
-
-      # 4️⃣ Запускаем тесты
-      - name: Run first_test
+      # 5️⃣ Запускаем тесты
+      - name: first_test
         if: "github.event.inputs.deployment_target == 'first_test'"
-        run: pytest tests/test_all.py::test_get_all_objects --alluredir=allure-results
+        run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
         continue-on-error: true
-      - name: Run second_test
+      - name: second_test
         if: "github.event.inputs.deployment_target == 'second_test'"
-        run: pytest tests/test_all.py::test_get_by_id --alluredir=allure-results
+        run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
         continue-on-error: true
 
-      # 5️⃣ Генерируем Allure HTML отчет
-      - name: Install Allure
-        run: |
-          sudo wget https://github.com/allure-framework/allure2/releases/download/2.23.1/allure-2.23.1.tgz
-          sudo tar -zxvf allure-2.23.1.tgz -C /opt/
-          sudo ln -s /opt/allure-2.23.1/bin/allure /usr/bin/allure
-      - name: Generate Allure report
-        run: allure generate allure-results -o allure-report --clean
+      # 6️⃣ Собираем Allure отчёт с учётом истории
+      - name: Build Allure report
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
+        with:
+          gh_pages: gh_pages          # где история
+          allure_results: allure-results
+          allure_history: allure-history
 
-      # 6️⃣ Копируем историю в папку для публикации
-      - name: Copy history for next runs
-        run: |
-          mkdir -p allure-report/history
-          if [ -d "allure-results/history" ] && [ "$(ls -A allure-results/history)" ]; then
-            cp -r allure-results/history/* allure-report/history/
-          fi
-
-      # 7️⃣ Публикуем на GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      # 7️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
+      - name: Publish Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.TOKEN }}
           publish_branch: gh_pages
-          publish_dir: allure-report
+          publish_dir: allure-history
