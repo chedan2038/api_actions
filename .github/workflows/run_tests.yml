@@ -1,4 +1,4 @@
-name: Automated tests
+name: Automated Allure Tests with History
 
 on:
   workflow_dispatch:
@@ -13,102 +13,67 @@ on:
           - second_test
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 jobs:
-  download-history:
-    runs-on: ubuntu-latest
-    name: Download history
-    steps:
-      - name: setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12.3"
-      - run: >
-          ARTIFACT_ID=$(curl -L   
-          -H "Accept: application/vnd.github+json" 
-          -H "X-GitHub-Api-Version: 2022-11-28" 
-          "https://api.github.com/repos/chedan2038/api_actions/actions/artifacts?name=allure-results" 
-          | python3 -c "import sys, json; print(json.load(sys.stdin)['artifacts'][0]['id']);") &&
-          curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/chedan2038/api_actions/actions/artifacts/$ARTIFACT_ID/zip -o artifacts.zip
-
-      - run: mkdir allure-results && unzip artifacts.zip -d allure-results
-      - name: Store allure history
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-history
-          path: allure-results
-          retention-days: 1
-
-
-  test:
+  run-tests:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Проверяем код
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: setup Python
-        uses: actions/setup-python@v4
+
+      # 2️⃣ Устанавливаем Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12.3"
-      - name: Install Chrome
-        run: sudo apt-get install google-chrome-stable
+          python-version: "3.11"
+
+      # 3️⃣ Устанавливаем зависимости
       - name: Install dependencies
-        run: pip install -r "requirements.txt"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install allure-pytest
 
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v4
+      # 4️⃣ Загружаем историю предыдущих отчётов (ветка gh-pages)
+      - name: Load previous Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh_pages
+          path: gh_pages
 
+      # 5️⃣ Запускаем тесты
       - name: first_test
         if: "github.event.inputs.deployment_target == 'first_test'"
         run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
-#        continue-on-error: true
+        continue-on-error: true
       - name: second_test
         if: "github.event.inputs.deployment_target == 'second_test'"
         run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
-#        continue-on-error: true
-      - name: Store allure results
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-results
-          path: allure-results
-          retention-days: 1
+        continue-on-error: true
 
-  generate-report:
-    runs-on: ubuntu-latest
-    needs: test
-    name: Generate report
-    steps:
-      - uses: actions/setup-java@v4
+      # 6️⃣ Собираем Allure отчёт с учётом истории
+      - name: Build Allure report
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
         with:
-          distribution: microsoft
-          java-version: '17'
-      - run: sudo wget https://github.com/allure-framework/allure2/releases/download/2.23.1/allure-2.23.1.tgz && sudo tar -zxvf allure-2.23.1.tgz -C /opt/ && sudo ln -s /opt/allure-2.23.1/bin/allure /usr/bin/allure
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v4
-      - run: allure generate -c allure-results -o _site
-      - name: Store generated report
-        uses: actions/upload-artifact@v4
-        with:
-          name: _site
-          path: _site
-          retention-days: 1
+          gh_pages: gh_pages          # где история
+          allure_results: allure-results
+          allure_history: allure-history
 
-  publish-report:
-    runs-on: ubuntu-latest
-    needs: generate-report
-    name: Report publication
-    steps:
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v4
-      - name: Upload static files as artifact
-        uses: actions/upload-pages-artifact@v4
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # 7️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
+      - name: Publish Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          publish_branch: gh_pages
+          publish_dir: allure-history
