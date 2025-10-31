@@ -51,14 +51,14 @@ jobs:
           path: gh-pages
 
       # 5️⃣ Запускаем тесты
-      - name: Run selected tests
-        run: |
-          mkdir -p allure-results
-          if [ "${{ github.event.inputs.target }}" = "first_test" ]; then
-            pytest tests/test_button.py::test_button_exist --alluredir=allure-results
-          elif [ "${{ github.event.inputs.target }}" = "second_test" ]; then
-            pytest tests/test_button.py::test_button_exist_2 --alluredir=allure-results
-          fi
+      - name: first_test
+        if: "github.event.inputs.deployment_target == 'first_test'"
+        run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
+        #     continue-on-error: true
+      - name: second_test
+        if: "github.event.inputs.deployment_target == 'second_test'"
+        run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
+        #        continue-on-error: true
 
       # 6️⃣ Собираем Allure отчёт с учётом истории
       - name: Build Allure report
