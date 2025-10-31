@@ -73,6 +73,7 @@ jobs:
           gh_pages: gh_pages          # где история
           allure_results: allure-results
           allure_history: allure-history
+          keep_reports: 20
 
       # 7️⃣ Публикуем отчёт в ветку gh_pages (GitHub Pages)
       - name: Publish Allure report to GitHub Pages
