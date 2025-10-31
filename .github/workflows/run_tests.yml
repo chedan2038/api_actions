@@ -6,7 +6,7 @@ on:
       deployment_target:
         description: Choose target
         required: true
-        default:
+        default: second_test
         type: choice
         options:
           - first_test
@@ -36,13 +36,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          sudo apt-get install -y google-chrome-stable wget unzip
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install allure-pytest
 
-      # 4️⃣ Загружаем историю предыдущих отчётов (ветка gh-pages)
-      - name: Load previous Allure history
+      # 4️⃣ Загружаем историю предыдущих отчётов (ветка gh_pages)
+      - name: Checkout gh_pages for history
         uses: actions/checkout@v4
         if: always()
         continue-on-error: true
@@ -55,12 +55,36 @@ jobs:
         if: "github.event.inputs.deployment_target == 'first_test'"
         run: pytest tests/test_all.py::test_get_all_objects --alluredir allure-results
         continue-on-error: true
+
       - name: second_test
         if: "github.event.inputs.deployment_target == 'second_test'"
         run: pytest tests/test_all.py::test_get_by_id --alluredir allure-results
         continue-on-error: true
 
-      # 6️⃣ Подготовка истории для агрегированного отчёта
+      # 6️⃣ Копируем текущие результаты в историю
       - name: Merge current results into history
         run: |
-          mkdir -p gh_pages/allure-history/hi_
+          mkdir -p gh_pages/history
+          cp -r allure-results/* gh_pages/history/ || echo "No new results"
+
+      # 7️⃣ Устанавливаем Allure CLI
+      - name: Install Allure CLI
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.23.1/allure-2.23.1.tgz
+          sudo tar -zxvf allure-2.23.1.tgz -C /opt/
+          sudo ln -s /opt/allure-2.23.1/bin/allure /usr/bin/allure
+
+      # 8️⃣ Генерируем единый Allure отчёт с историей
+      - name: Generate Allure report
+        run: |
+          mkdir -p gh_pages/report
+          allure generate gh_pages/history -o gh_pages/report --clean
+
+      # 9️⃣ Публикуем ветку целиком, чтобы сохранялась история
+      - name: Publish Allure report and history to gh_pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          publish_branch: gh_pages
+          publish_dir: gh_pages
+          keep_files: true
