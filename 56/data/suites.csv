@@ -1,0 +1,4 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Fri Oct 31 12:55:38 GMT 2025","Fri Oct 31 12:55:39 GMT 2025","471","tests","test_all","","","","test_get_by_id","
+    б) Получить конкретный зарезервированный объект /objects/4 и проверить ожидаемые поля.
+    "
