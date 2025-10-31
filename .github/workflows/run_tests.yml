@@ -77,7 +77,9 @@ jobs:
       - name: Copy history for next runs
         run: |
           mkdir -p allure-report/history
-          cp -r allure-results/history/* allure-report/history/
+          if [ -d "allure-results/history" ]; then
+            cp -r allure-results/history/* allure-report/history/
+          fi
 
       # 7️⃣ Публикуем на GitHub Pages
       - name: Deploy to GitHub Pages
